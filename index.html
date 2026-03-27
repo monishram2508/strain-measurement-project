@@ -2,42 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Strain Gauge Dashboard</title>
+  <title>Strain gauge dashboard</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f5f5f5; }
-    #weight { font-size: 80px; font-weight: bold; color: #222; }
-    #unit { font-size: 24px; color: #888; margin-top: -10px; }
-    #status { font-size: 14px; color: #aaa; margin-top: 20px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: #0f1117;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 32px;
+    }
+    h1 { font-size: 18px; font-weight: 500; color: #888; letter-spacing: 0.05em; }
+
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .weight-display {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 12px;
+    }
+    #weight {
+      font-size: 96px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .unit { font-size: 28px; color: #555; margin-bottom: 14px; }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #555;
+      transition: background 0.4s;
+    }
+    .dot.connected { background: #22c55e; }
+    .dot.error { background: #ef4444; }
+    #status { font-size: 13px; color: #666; }
+
+    .chart-card { padding: 24px; }
+    .chart-label {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
   </style>
 </head>
 <body>
-  <div id="weight">--</div>
-  <div id="unit">grams</div>
-  <div id="status">Connecting...</div>
+  <h1>Strain gauge — live dashboard</h1>
+
+  <div class="card">
+    <div class="weight-display">
+      <div id="weight">--</div>
+      <div class="unit">g</div>
+    </div>
+    <div class="status-row">
+      <div class="dot" id="dot"></div>
+      <div id="status">Connecting to broker...</div>
+    </div>
+  </div>
+
+  <div class="card chart-card">
+    <div class="chart-label">Weight over time</div>
+    <canvas id="chart" height="120"></canvas>
+  </div>
 
   <script>
-    const brokerUrl  = "wss://c308db2b47f4483f96c0e77ef71918ad.s1.eu.hivemq.cloud:8884/mqtt";
+    const brokerUrl = "wss://c308db2b47f4483f96c0e77ef71918ad.s1.eu.hivemq.cloud:8884/mqtt";
     const options = {
       username: "YOUR_HIVEMQ_USERNAME",
       password: "YOUR_HIVEMQ_PASSWORD",
       clientId: "dashboard_" + Math.random().toString(16).substr(2, 8)
     };
 
+    const MAX_POINTS = 30;
+    const labels = [];
+    const dataPoints = [];
+
+    const ctx = document.getElementById("chart").getContext("2d");
+    const chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Weight (g)",
+          data: dataPoints,
+          borderColor: "#6366f1",
+          backgroundColor: "rgba(99,102,241,0.08)",
+          borderWidth: 2,
+          pointRadius: 2,
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        animation: false,
+        scales: {
+          x: { ticks: { color: "#555", maxTicksLimit: 6 }, grid: { color: "#1f2232" } },
+          y: { ticks: { color: "#555" }, grid: { color: "#1f2232" } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    function updateChart(value) {
+      const now = new Date().toLocaleTimeString();
+      labels.push(now);
+      dataPoints.push(value);
+      if (labels.length > MAX_POINTS) { labels.shift(); dataPoints.shift(); }
+      chart.update();
+    }
+
     const client = mqtt.connect(brokerUrl, options);
 
     client.on("connect", () => {
+      document.getElementById("dot").className = "dot connected";
       document.getElementById("status").textContent = "Connected — waiting for data...";
       client.subscribe("scale/weight");
     });
 
     client.on("message", (topic, message) => {
-      document.getElementById("weight").textContent = parseFloat(message.toString()).toFixed(1);
-      document.getElementById("status").textContent = "Last updated: " + new Date().toLocaleTimeString();
+      const val = parseFloat(message.toString());
+      document.getElementById("weight").textContent = val.toFixed(1);
+      document.getElementById("status").textContent = "Last update: " + new Date().toLocaleTimeString();
+      updateChart(val);
     });
 
     client.on("error", (err) => {
-      document.getElementById("status").textContent = "Connection error: " + err.message;
+      document.getElementById("dot").className = "dot error";
+      document.getElementById("status").textContent = "Error: " + err.message;
     });
   </script>
 </body>
