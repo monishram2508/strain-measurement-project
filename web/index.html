@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Strain Gauge Dashboard</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f5f5f5; }
+    #weight { font-size: 80px; font-weight: bold; color: #222; }
+    #unit { font-size: 24px; color: #888; margin-top: -10px; }
+    #status { font-size: 14px; color: #aaa; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div id="weight">--</div>
+  <div id="unit">grams</div>
+  <div id="status">Connecting...</div>
+
+  <script>
+    const brokerUrl  = "wss://c308db2b47f4483f96c0e77ef71918ad.s1.eu.hivemq.cloud:8884/mqtt";
+    const options = {
+      username: "YOUR_HIVEMQ_USERNAME",
+      password: "YOUR_HIVEMQ_PASSWORD",
+      clientId: "dashboard_" + Math.random().toString(16).substr(2, 8)
+    };
+
+    const client = mqtt.connect(brokerUrl, options);
+
+    client.on("connect", () => {
+      document.getElementById("status").textContent = "Connected — waiting for data...";
+      client.subscribe("scale/weight");
+    });
+
+    client.on("message", (topic, message) => {
+      document.getElementById("weight").textContent = parseFloat(message.toString()).toFixed(1);
+      document.getElementById("status").textContent = "Last updated: " + new Date().toLocaleTimeString();
+    });
+
+    client.on("error", (err) => {
+      document.getElementById("status").textContent = "Connection error: " + err.message;
+    });
+  </script>
+</body>
+</html>
