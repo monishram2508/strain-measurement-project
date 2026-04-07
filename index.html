@@ -5,6 +5,7 @@
   <title>Strain gauge dashboard</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="config.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -91,10 +92,10 @@
   </div>
 
   <script>
-    const brokerUrl = "wss:/c308db2b47f4483f96c0e77ef71918ad.s1.eu.hivemq.cloud:8884/mqtt";
+    const brokerUrl = MQTT_BROKER;
     const options = {
-      username: "monuraju",
-      password: "Neeltouchesmonish69",
+      username: MQTT_USER,
+      password: MQTT_PASS,
       clientId: "dashboard_" + Math.random().toString(16).substr(2, 8)
     };
 
