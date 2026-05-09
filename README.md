@@ -56,6 +56,38 @@ Update `ssid`, `password`, and `mqtt_server` in the firmware, flash to ESP32, th
 
 ---
 
+## Dashboard
+
+Two options — both work over MQTT:
+
+### Option 1 — HTML Dashboard (no install needed)
+Open `dashboard/index.html` directly in a browser. Shows a live weight readout and a scrolling weight-over-time chart. Update `config.js` with your MQTT broker URL first.
+
+### Option 2 — Node-RED
+```bash
+npm install -g node-red
+node-red
+```
+Import `dashboard/nodered_flow.json` via hamburger menu → Import, then open `http://localhost:1880/ui`.
+
+---
+
+## Quickstart
+
+**Start MQTT broker:**
+```bash
+echo "listener 1883 0.0.0.0\nallow_anonymous true" > /tmp/mosquitto.conf
+/opt/homebrew/sbin/mosquitto -c /tmp/mosquitto.conf
+```
+
+**Flash ESP32:**
+Update `WIFI_SSID`, `WIFI_PASSWORD`, and `MQTT_SERVER` in `firmware/esp32_main.ino`, then flash to ESP32.
+
+**Open dashboard:**
+Open `dashboard/index.html` in your browser.
+
+___
+
 ## Report
 
 A detailed IEEE-format report covering circuit design, calculations, LTspice simulation, calibration methodology, and challenges faced during implementation is available in `docs/report.pdf`.
