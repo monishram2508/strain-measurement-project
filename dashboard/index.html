@@ -140,7 +140,7 @@
     client.on("connect", () => {
       document.getElementById("dot").className = "dot connected";
       document.getElementById("status").textContent = "Connected — waiting for data...";
-      client.subscribe("scale/weight");
+      client.subscribe("strain/weight");
     });
 
     client.on("message", (topic, message) => {
