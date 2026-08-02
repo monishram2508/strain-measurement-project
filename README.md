@@ -17,7 +17,7 @@ Strain Gauges (Half Bridge)
     → Inverting Summer + Active LPF (fc = 15.9 Hz)
     → HX711 24-bit ADC
     → ESP32 (WiFi + MQTT)
-    → Node-RED Dashboard (local browser)
+    → Live Dashboard (browser, MQTT over WebSockets)
 ```
 
 ---
@@ -29,68 +29,32 @@ Strain Gauges (Half Bridge)
 | `firmware/esp32_main.ino` | ESP32 Arduino code — tare, calibration, MQTT publish |
 | `simulation/Strain_measurement.asc` | Full LTspice schematic |
 | `simulation/ad620.cir` | AD620 SPICE model |
-| `dashboard/nodered_flow.json` | Node-RED flow — import directly |
-| `docs/report.pdf` | Full IEEE-format project report |
+| `data/calibration.csv` | Empirical calibration data (weight vs. raw HX711 counts) |
+| `index.html` / `config.js` | Live MQTT dashboard (also served via GitHub Pages) |
+| `docs/strain-measurement-report.pdf` | Full IEEE-format project report |
 
 ---
 
 ## Quickstart
 
-**Dependencies:**
+**Flash the firmware:**
+Update `WIFI_SSID`, `WIFI_PASSWORD`, and `MQTT_SERVER` in `firmware/esp32_main.ino`, then flash to the ESP32.
+
+**Run a local MQTT broker** (skip this if using the public broker configured in `config.js`):
 ```bash
 brew install mosquitto
-npm install -g node-red
-```
-
-**Run:**
-```bash
-# Terminal 1 — MQTT broker
-echo "listener 1883 0.0.0.0\nallow_anonymous true" > /tmp/mosquitto.conf
-/opt/homebrew/sbin/mosquitto -c /tmp/mosquitto.conf
-
-# Terminal 2 — Dashboard
-node-red
-```
-
-Update `ssid`, `password`, and `mqtt_server` in the firmware, flash to ESP32, then open `http://localhost:1880/ui`.
-
----
-
-## Dashboard
-
-Two options — both work over MQTT:
-
-### Option 1 — HTML Dashboard (no install needed)
-Open `dashboard/index.html` directly in a browser. Shows a live weight readout and a scrolling weight-over-time chart. Update `config.js` with your MQTT broker URL first.
-
-### Option 2 — Node-RED
-```bash
-npm install -g node-red
-node-red
-```
-Import `dashboard/nodered_flow.json` via hamburger menu → Import, then open `http://localhost:1880/ui`.
-
----
-
-## Quickstart
-
-**Start MQTT broker:**
-```bash
 echo "listener 1883 0.0.0.0\nallow_anonymous true" > /tmp/mosquitto.conf
 /opt/homebrew/sbin/mosquitto -c /tmp/mosquitto.conf
 ```
 
-**Flash ESP32:**
-Update `WIFI_SSID`, `WIFI_PASSWORD`, and `MQTT_SERVER` in `firmware/esp32_main.ino`, then flash to ESP32.
+**Open the dashboard:**
+Open `index.html` directly in a browser (or visit the GitHub Pages URL). It shows a live weight readout and a scrolling weight-over-time chart over MQTT. Update `config.js` with your broker URL first if not using the default.
 
-**Open dashboard:**
-Open `dashboard/index.html` in your browser.
-
-___
+---
 
 ## Report
 
-A detailed IEEE-format report covering circuit design, calculations, LTspice simulation, calibration methodology, and challenges faced during implementation is available in `docs/report.pdf`.
+A detailed IEEE-format report covering circuit design, calculations, LTspice simulation, calibration methodology, and challenges faced during implementation is available in `docs/strain-measurement-report.pdf`.
 
 ---
 
